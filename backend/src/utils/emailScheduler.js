@@ -8,10 +8,10 @@ const agenda = new Agenda({
 
 agenda.define("send email", async (job, done) => {
   const { to, subject, text } = job.attrs.data;
-  console.log(to, subject, text);
   let transport = nodemailer.createTransport({
     host: "smtp.ethereal.email",
     port: 587,
+    secure: false,
     auth: {
       user: `${process.env.USER}`,
       pass: `${process.env.PASS}`,
@@ -30,7 +30,6 @@ agenda.define("send email", async (job, done) => {
       console.log(error);
     } else {
       console.log("Email sent: " + info.response);
-      console.log(info);
     }
     done();
   });
@@ -55,26 +54,26 @@ const scheduleEmails = async () => {
   }
 
   const to = leadSourceNode?.data?.label?.split("- (")[1].split(")")[0];
-  console.log("to -> ", to);
 
-  let delay = 0;
+  let totalDelay = 0;
 
   for (const node of sequence.nodes) {
     if (node.data.label.startsWith("Cold-Email")) {
       const subject = node.data.label.split("\n- (")[1]?.split(")")[0];
       const text = node.data.label.split(") ")[1] || "";
 
-      if (delay > 0) {
-        agenda.schedule(`in ${delay} minutes`, "send email", {
-          to,
-          subject,
-          text,
-        });
-      } else {
-        agenda.now("send email", { to, subject, text });
-      }
+      totalDelay += 5000;
+      agenda.schedule(new Date(Date.now() + totalDelay), "send email", {
+        to,
+        subject,
+        text,
+      });
     } else if (node.data.label.startsWith("Wait/Delay")) {
-      delay += parseInt(node.data.label.split("- (")[1]?.split(" min")[0], 10);
+      const delay = parseInt(
+        node.data.label.split("- (")[1]?.split(" min")[0],
+        10
+      );
+      totalDelay += delay * 60 * 1000;
     }
   }
 
