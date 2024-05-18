@@ -151,7 +151,7 @@ const FlowChart = () => {
 
   const handleStartProcess = async () => {
     const response = await axios.post(
-      `http://localhost:3000/api/sequence/start-process`,
+      `${import.meta.env.VITE_BASE_URL}/api/sequence/start-process`,
       {
         nodes,
         edges,
