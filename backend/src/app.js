@@ -6,7 +6,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: process.env.ORIGIN,
+    origin: "https://automated-email-sequencer-4wv2.vercel.app",
     credentials: true,
   })
 );
