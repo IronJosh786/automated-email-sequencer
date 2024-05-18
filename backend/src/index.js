@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import { app } from "./app.js";
 import connectToDB from "./db/index.js";
-import { agenda, scheduleEmails } from "./utils/emailScheduler.js";
+import { agenda } from "./utils/emailScheduler.js";
 
 dotenv.config({ path: "./.env" });
 
@@ -17,6 +17,5 @@ connectToDB()
   .catch((error) => console.log("Connection to MongoDB failed: ", error));
 
 agenda.on("ready", () => {
-  scheduleEmails();
   agenda.start();
 });

@@ -8,21 +8,21 @@ const agenda = new Agenda({
 
 agenda.define("send email", async (job, done) => {
   const { to, subject, text } = job.attrs.data;
-
+  console.log(to, subject, text);
   let transport = nodemailer.createTransport({
-    host: process.env.MAILTRAP_HOST,
-    port: Number(process.env.MAILTRAP_PORT),
+    host: "smtp.ethereal.email",
+    port: 587,
     auth: {
-      user: process.env.MAILTRAP_USER,
-      pass: process.env.MAILTRAP_PASSWORD,
+      user: `${process.env.USER}`,
+      pass: `${process.env.PASS}`,
     },
   });
 
   let mailOptions = {
     from: "test@test.com",
     to,
-    subject,
     text,
+    subject,
   };
 
   transport.sendMail(mailOptions, (error, info) => {
@@ -30,24 +30,55 @@ agenda.define("send email", async (job, done) => {
       console.log(error);
     } else {
       console.log("Email sent: " + info.response);
+      console.log(info);
     }
     done();
   });
 });
 
 const scheduleEmails = async () => {
-  const sequences = await Sequence.find();
-  sequences.forEach((sequence) => {
-    sequence.nodes.forEach((node) => {
-      if (node.type === "Cold Email") {
-        agenda.schedule(node.date, "send email", {
-          to: node.to,
-          subject: node.subject,
-          text: node.text,
+  const sequence = await Sequence.findOne();
+
+  if (!sequence) {
+    console.log("No sequence found");
+    return;
+  }
+
+  const leadSourceNode = sequence.nodes.find((n) =>
+    n.data.label.startsWith("Lead-Source")
+  );
+
+  if (!leadSourceNode) {
+    console.log("No Lead-Source node found, skipping sequence");
+    await Sequence.findByIdAndDelete(sequence._id);
+    return;
+  }
+
+  const to = leadSourceNode?.data?.label?.split("- (")[1].split(")")[0];
+  console.log("to -> ", to);
+
+  let delay = 0;
+
+  for (const node of sequence.nodes) {
+    if (node.data.label.startsWith("Cold-Email")) {
+      const subject = node.data.label.split("\n- (")[1]?.split(")")[0];
+      const text = node.data.label.split(") ")[1] || "";
+
+      if (delay > 0) {
+        agenda.schedule(`in ${delay} minutes`, "send email", {
+          to,
+          subject,
+          text,
         });
+      } else {
+        agenda.now("send email", { to, subject, text });
       }
-    });
-  });
+    } else if (node.data.label.startsWith("Wait/Delay")) {
+      delay += parseInt(node.data.label.split("- (")[1]?.split(" min")[0], 10);
+    }
+  }
+
+  await Sequence.findByIdAndDelete(sequence._id);
 };
 
 export { agenda, scheduleEmails };

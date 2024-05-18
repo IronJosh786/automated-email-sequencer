@@ -9,6 +9,8 @@ import Modal from "react-modal";
 import "reactflow/dist/style.css";
 import { useState, useCallback, useEffect } from "react";
 
+Modal.setAppElement("#root");
+
 const customStyles = {
   content: {
     top: "50%",
@@ -69,12 +71,13 @@ const FlowChart = () => {
     event.preventDefault();
     const formData = new FormData(event.target);
     const subject = formData.get("subject");
+    const text = formData.get("content");
     const delay = formData.get("delay");
     const email = formData.get("email");
     let nodeContent = "";
 
     if (modalContent === "Cold-Email") {
-      nodeContent = `- (${subject})`;
+      nodeContent = `- (${subject}) ${text}`;
     } else if (modalContent === "Wait/Delay") {
       nodeContent = `- (${delay})`;
     } else {
@@ -120,8 +123,8 @@ const FlowChart = () => {
             <label htmlFor="delay">Delay:</label>
             <select name="delay" id="delay" required>
               {[...Array(6).keys()].map((i) => (
-                <option key={i} value={`${(i + 1) * 10} min`}>
-                  {(i + 1) * 10} min
+                <option key={i} value={`${i + 1} min`}>
+                  {i + 1} min
                 </option>
               ))}
             </select>
@@ -143,6 +146,21 @@ const FlowChart = () => {
         );
       default:
         return null;
+    }
+  };
+
+  const handleStartProcess = async () => {
+    const response = await axios.post(
+      `http://localhost:3000/api/sequence/start-process`,
+      {
+        nodes,
+        edges,
+      }
+    );
+    if (response.status === 200) {
+      alert("Process started successfully");
+    } else {
+      alert("Error starting process");
     }
   };
 
@@ -170,6 +188,7 @@ const FlowChart = () => {
           <option value="Wait/Delay">Wait/Delay</option>
         </select>
         <button onClick={handleAddNode}>Add Node</button>
+        <button onClick={handleStartProcess}>Start Process</button>
       </div>
       <Modal
         isOpen={modalIsOpen}

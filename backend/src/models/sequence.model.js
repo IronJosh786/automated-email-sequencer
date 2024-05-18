@@ -1,9 +1,26 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const sequenceSchema = new mongoose.Schema(
+const nodeSchema = new Schema({
+  id: { type: String, required: true },
+  data: {
+    label: { type: String, required: true },
+  },
+  position: {
+    x: { type: Number, required: true },
+    y: { type: Number, required: true },
+  },
+});
+
+const edgeSchema = new Schema({
+  id: { type: String, required: true },
+  source: { type: String, required: true },
+  target: { type: String, required: true },
+});
+
+const sequenceSchema = new Schema(
   {
-    name: String,
-    nodes: Array,
+    nodes: [nodeSchema],
+    edges: [edgeSchema],
   },
   { timestamps: true }
 );
