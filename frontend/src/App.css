@@ -1,3 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.react-flow__node {
+  background-color: #dfd0b8;
+  min-width: min-content;
+  color: #153448;
+  border: 2px solid #153448;
+  border-radius: 0.5rem;
+  font-weight: 600;
+}

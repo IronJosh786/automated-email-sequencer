@@ -9,12 +9,11 @@ const agenda = new Agenda({
 agenda.define("send email", async (job, done) => {
   const { to, subject, text } = job.attrs.data;
   let transport = nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
-    secure: false,
+    host: process.env.MAILTRAP_HOST,
+    port: Number(process.env.MAILTRAP_PORT),
     auth: {
-      user: `${process.env.USER}`,
-      pass: `${process.env.PASS}`,
+      user: process.env.MAILTRAP_USER,
+      pass: process.env.MAILTRAP_PASSWORD,
     },
   });
 

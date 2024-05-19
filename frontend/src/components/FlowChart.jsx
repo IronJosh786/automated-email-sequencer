@@ -27,9 +27,9 @@ const FlowChart = () => {
   const [edges, setEdges] = useState([]);
   const [nodeCount, setNodeCount] = useState(1);
   const [selectedNodeType, setSelectedNodeType] = useState("Lead-Source");
-
   const [modalIsOpen, setIsOpen] = useState(false);
   const [modalContent, setModalContent] = useState("");
+  const [editingNode, setEditingNode] = useState(null);
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -62,6 +62,7 @@ const FlowChart = () => {
     if (selectedNodeType) {
       setModalContent(selectedNodeType);
       setIsOpen(true);
+      setEditingNode(null);
     } else {
       alert("Please select a valid node type.");
     }
@@ -84,10 +85,20 @@ const FlowChart = () => {
       nodeContent = `- (${email})`;
     }
 
-    if (selectedNodeType === "Lead-Source") {
-      setSelectedNodeType("Cold-Email");
+    if (editingNode) {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === editingNode.id
+            ? { ...node, data: { label: `${modalContent}\n${nodeContent}` } }
+            : node
+        )
+      );
+    } else {
+      if (selectedNodeType === "Lead-Source") {
+        setSelectedNodeType("Cold-Email");
+      }
+      addNode(modalContent, nodeContent);
     }
-    addNode(modalContent, nodeContent);
     setIsOpen(false);
   };
 
@@ -101,6 +112,9 @@ const FlowChart = () => {
               type="text"
               name="subject"
               id="subject"
+              defaultValue={
+                editingNode?.data.label.split("- (")[1]?.split(")")[0] || ""
+              }
               required
               className="border border-black rounded-md p-1"
             />
@@ -109,44 +123,66 @@ const FlowChart = () => {
               type="text"
               name="content"
               id="content"
+              defaultValue={editingNode?.data.label.split(") ")[1] || ""}
               required
               className="border border-black rounded-md p-1"
             />
             <button type="submit" className="mt-2">
-              Add Cold Email
+              {editingNode ? "Update Cold Email" : "Add Cold Email"}
             </button>
           </form>
         );
       case "Wait/Delay":
         return (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-2">
             <label htmlFor="delay">Delay:</label>
-            <select name="delay" id="delay" required>
+            <select
+              name="delay"
+              id="delay"
+              defaultValue={
+                editingNode?.data.label.split("- (")[1]?.split(" min")[0] +
+                  " min" || ""
+              }
+              required
+            >
               {[...Array(6).keys()].map((i) => (
                 <option key={i} value={`${i + 1} min`}>
                   {i + 1} min
                 </option>
               ))}
             </select>
-            <button type="submit">Add Delay</button>
+            <button type="submit" className="mt-2">
+              {editingNode ? "Update Delay" : "Add Delay"}
+            </button>
           </form>
         );
       case "Lead-Source":
         return (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-2">
             <label htmlFor="email">Recipient Email:</label>
             <input
               name="email"
               id="email"
+              defaultValue={
+                editingNode?.data.label.split("- (")[1]?.split(")")[0] || ""
+              }
               required
               className="border border-black rounded-md p-1"
             />
-            <button type="submit">Add Lead Source</button>
+            <button type="submit" className="mt-2">
+              {editingNode ? "Update Lead Source" : "Add Lead Source"}
+            </button>
           </form>
         );
       default:
         return null;
     }
+  };
+
+  const handleNodeClick = (event, node) => {
+    setModalContent(node.data.label.split("\n")[0]);
+    setIsOpen(true);
+    setEditingNode(node);
   };
 
   const handleStartProcess = async () => {
@@ -169,17 +205,19 @@ const FlowChart = () => {
   }, []);
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full mt-4">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeClick={handleNodeClick}
+        className="rounded-md bg-[#3C5B6F]"
       >
         <Controls />
         <Background />
       </ReactFlow>
-      <div className="w-full flex items-center justify-center gap-4">
+      <div className="w-full flex items-center justify-center gap-4 mt-4">
         <select
           value={selectedNodeType}
           onChange={(e) => setSelectedNodeType(e.target.value)}
