@@ -9,8 +9,10 @@ import Modal from "react-modal";
 import "reactflow/dist/style.css";
 import { useState, useCallback, useEffect } from "react";
 
+// Set the root element for the modal
 Modal.setAppElement("#root");
 
+// Custom styles for the modal
 const customStyles = {
   content: {
     top: "50%",
@@ -31,15 +33,19 @@ const FlowChart = () => {
   const [modalContent, setModalContent] = useState("");
   const [editingNode, setEditingNode] = useState(null);
 
+  // Callback to handle node changes
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
     []
   );
+
+  // Callback to handle edge changes
   const onEdgesChange = useCallback(
     (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
     []
   );
 
+  // Function to add a new node and connect it to previous node
   const addNode = (label, content) => {
     const newNodeId = (nodeCount + 1).toString();
     const newNode = {
@@ -58,6 +64,7 @@ const FlowChart = () => {
     setEdges((eds) => eds.concat(newEdge));
   };
 
+  // Handle the addition of a new node
   const handleAddNode = () => {
     if (selectedNodeType) {
       setModalContent(selectedNodeType);
@@ -68,6 +75,7 @@ const FlowChart = () => {
     }
   };
 
+  // Handle form submission for adding/updating nodes
   const handleSubmit = (event) => {
     event.preventDefault();
     const formData = new FormData(event.target);
@@ -85,6 +93,7 @@ const FlowChart = () => {
       nodeContent = `- (${email})`;
     }
 
+    // Update the existing node if editing, otherwise add a new node
     if (editingNode) {
       setNodes((nds) =>
         nds.map((node) =>
@@ -102,6 +111,7 @@ const FlowChart = () => {
     setIsOpen(false);
   };
 
+  // Render the modal content based on the selected node type
   const renderModalContent = () => {
     switch (modalContent) {
       case "Cold-Email":
@@ -179,12 +189,14 @@ const FlowChart = () => {
     }
   };
 
+  // Handle node click to open modal for editing
   const handleNodeClick = (event, node) => {
     setModalContent(node.data.label.split("\n")[0]);
     setIsOpen(true);
     setEditingNode(node);
   };
 
+  // Handle the process start
   const handleStartProcess = async () => {
     const response = await axios.post(
       `${import.meta.env.VITE_BASE_URL}/api/sequence/start-process`,
@@ -200,6 +212,7 @@ const FlowChart = () => {
     }
   };
 
+  // Add the initial lead-source node on component mount
   useEffect(() => {
     handleAddNode();
   }, []);
